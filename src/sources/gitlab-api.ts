@@ -9,8 +9,18 @@ import { validItems, type Tally, type Commands } from '../infra/commands.ts'
 export async function glabApi<T>(commands: Commands, schema: z.ZodType<T>, path: string): Promise<T> {
   return schema.parse(JSON.parse(await commands.run('glab', ['api', path])))
 }
-/** Fetches all pages of a GitLab API list through `glab`, skipping items that fail schema validation. */
+/** Fetches all pages of a GitLab API list through `glab`, skipping items that fail schema validation.
+ *
+ * `glab api --paginate` prints the pages back to back rather than wrapping them, and its api has no `--slurp`, so each
+ * page is requested by number until one returns fewer than 100 items.
+ */
 export async function glabPages<T>(commands: Commands, item: z.ZodType<T>, path: string, tally?: Tally): Promise<T[]> {
-  const pages = z.array(z.array(z.unknown())).parse(JSON.parse(await commands.run('glab', ['api', path, '--paginate', '--slurp'])))
-  return validItems(item, pages.flat(), tally)
+  const joiner = path.includes('?') ? '&' : '?'
+  const items: unknown[] = []
+  for (let page = 1; ; page++) {
+    const body = z.array(z.unknown()).parse(JSON.parse(await commands.run('glab', ['api', `${path}${joiner}per_page=100&page=${page}`])))
+    items.push(...body)
+    if (body.length < 100) break
+  }
+  return validItems(item, items, tally)
 }

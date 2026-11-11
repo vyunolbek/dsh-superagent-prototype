@@ -60,7 +60,7 @@ function glab(h: ReturnType<typeof host>, routes: Record<string, unknown>): stri
     const path = (args[1] ?? '').split('?')[0]!
     const value: unknown = routes[path] ?? []
     if (value instanceof Error) throw value
-    return JSON.stringify(args.includes('--slurp') ? [value] : value)
+    return JSON.stringify(value)
   })
   return reads
 }
@@ -194,7 +194,7 @@ describe('gitlab source', () => {
     vi.spyOn(h.commands, 'run').mockImplementation(async (_program, args) => {
       writes.push(args.join(' '))
       if (args.includes('--method')) return '{}'
-      if (writes.length > 1) return JSON.stringify([[{ id: 9, body: `done\n\n<!-- dsh-superagent:m1 -->`, author: { username: AGENT } }]])
+      if (writes.length > 1) return JSON.stringify([{ id: 9, body: `done\n\n<!-- dsh-superagent:m1 -->`, author: { username: AGENT } }])
       return JSON.stringify([])
     })
     expect(await sendGlab(h, message('m1', 'issue', 12, 'Done'))).toBe('sent')
