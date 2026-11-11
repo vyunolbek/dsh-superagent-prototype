@@ -2,7 +2,7 @@
 import { z } from 'zod'
 import type { OutboundMessage } from '../core/index.ts'
 import { CliError } from '../infra/commands.ts'
-import { glabPages } from './gitlab-api.ts'
+import { glabPages, glabRun } from './gitlab-api.ts'
 import type { SourceContext } from './host.ts'
 import type { ChannelLink, ChannelLinks } from './kind.ts'
 import { encodeProject, gitlabPage } from './gitlab-trigger.ts'
@@ -26,7 +26,7 @@ export async function sendGlab(host: Pick<SourceContext, 'commands'>, message: O
   const mine = (note: z.infer<typeof NoteSchema>) => note.author?.username === gitlab.login && (note.body ?? '').includes(marker)
   // A long conversation returns more notes than one page holds; read every page before deciding a note was not sent.
   if ((await glabPages(commands, NoteSchema, path)).some(mine)) return 'sent'
-  await commands.run('glab', ['api', path, '--method', 'POST', '-f', `body=${message.text}\n\n${marker}`])
+  await glabRun(commands, ['api', path, '--method', 'POST', '-f', `body=${message.text}\n\n${marker}`])
   return 'sent'
 }
 export function gitlabLink(address: Record<string, string>, links: ChannelLinks): ChannelLink {

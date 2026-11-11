@@ -11,7 +11,7 @@ import type { Localized, SourceKind } from './kind.ts'
 import { z } from 'zod'
 import { descriptionTrigger, encodeProject, DescriptionSchema, gitlabThread, NoteSchema, noteTrigger, SOURCE, TodoSchema, type GitlabDescription, type GitlabNote, type GitlabRef, type GitlabTodo }
   from './gitlab-trigger.ts'
-import { glabApi, glabPages } from './gitlab-api.ts'
+import { glabApi, glabPages, glabRun } from './gitlab-api.ts'
 import { gitlabLink, sendGlab } from './gitlab-channel.ts'
 
 const GitlabConfigSchema = GitlabAccountsSchema.extend({ pollSeconds: z.number().int().min(60).max(3600).default(60),
@@ -61,7 +61,7 @@ export const gitlabKind: SourceKind<GitlabConfig> = {
       const iid = String(trigger.meta.iid ?? '')
       const project = encodeProject(commands.deployment.gitlab?.project ?? '')
       const page = Number(cursor ?? '1')
-      const listed = await commands.run('glab', ['api', `projects/${project}/${kind}/${iid}/notes?sort=asc&order_by=created_at&per_page=100&page=${page}`])
+      const listed = await glabRun(commands, ['api', `projects/${project}/${kind}/${iid}/notes?sort=asc&order_by=created_at&per_page=100&page=${page}`])
       const tally = { skipped: 0 }
       const notes = validItems(NoteSchema, z.array(z.unknown()).parse(JSON.parse(listed)), tally)
       const messages = notes.filter(note => !note.system).map(note => ({ id: String(note.id), from: note.author?.username ?? 'ghost',
@@ -152,6 +152,7 @@ async function watch(ctx: SourceContext, signal: AbortSignal): Promise<void> {
       if (config && available(ctx)) interval = await pollRound(ctx, signal)
       else ctx.report('gitlab', health('paused', 'sourceOff'))
       failures = 0
+      if (config) ctx.report('gitlab', { state: 'ready', detail: `Polling ${config.repository} every ${Math.max(interval, config.pollSeconds)} seconds`, at: new Date().toISOString() })
     } catch (error) {
       failures += 1
       const failed = pollFailure(failures, config?.failuresBeforeError ?? 1, error)
@@ -208,18 +209,18 @@ async function pollTodos(ctx: SourceContext, round: Round): Promise<void> {
     // Todos of other projects, of the agent's own messages, and of unreadable targets are marked done and left alone.
     const ref = refOf(todo)
     if (!ref || !todo.project?.path_with_namespace || !project || !sameName(todo.project.path_with_namespace, project)) {
-      await commands.run('glab', ['api', `todos/${todo.id}/mark_as_done`, '--method', 'POST']).catch(() => {})
+      await glabRun(commands, ['api', `todos/${todo.id}/mark_as_done`, '--method', 'POST']).catch(() => {})
       continue
     }
     try {
       // Reading from the todo's own update leaves notes from before it alone.
       await readTarget(ctx, round, ref, todo.updated_at ?? undefined)
-      await commands.run('glab', ['api', `todos/${todo.id}/mark_as_done`, '--method', 'POST'])
+      await glabRun(commands, ['api', `todos/${todo.id}/mark_as_done`, '--method', 'POST'])
     } catch (error) {
       if (stopped(ctx, round)) return
       // A deleted or moved Issue or MR never arrives; mark its todo done so it does not retry forever.
       if (deleted(error)) {
-        await commands.run('glab', ['api', `todos/${todo.id}/mark_as_done`, '--method', 'POST']).catch(() => {})
+        await glabRun(commands, ['api', `todos/${todo.id}/mark_as_done`, '--method', 'POST']).catch(() => {})
         round.dropped.push(ref.iid)
         continue
       }
@@ -287,7 +288,7 @@ async function pollStreams(ctx: SourceContext, round: Round): Promise<void> {
       const since = new Date(Math.max(Date.parse(stored?.since ?? round.started), Date.parse(round.started) - POLL_HORIZON_MS)).toISOString()
       const begin = [since, stored?.started ?? round.started].sort().at(-1)!
       const listed = `${stream.path}&order_by=updated_at&sort=asc&per_page=100&updated_after=${encodeURIComponent(since)}`
-      const items = validItems(DescriptionSchema, z.array(z.unknown()).parse(JSON.parse(await commands.run('glab', ['api', listed]))), round.tally)
+      const items = validItems(DescriptionSchema, z.array(z.unknown()).parse(JSON.parse(await glabRun(commands, ['api', listed]))), round.tally)
       const { login } = ctx.deployment.gitlab ?? { login: '' }
       for (const item of items) {
         // Stopping mid-stream aborts before advancing the cursor so unread items are retried.

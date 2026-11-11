@@ -65,10 +65,10 @@ export class Commands {
   get deployment(): Deployment { return this.resolved() }
   get repository(): string { return this.deployment.repository }
   withSignal(signal?: AbortSignal): Commands { return signal ? new Commands(this.resolved, this.environment, AbortSignal.any([this.signal, signal])) : this }
-  async run(program: string, args: string[], cwd?: string): Promise<string> {
+  async run(program: string, args: string[], cwd?: string, env?: Record<string, string>): Promise<string> {
     try {
       const { stdout } = await exec(program, args, { cwd, signal: this.signal, timeout: TIMEOUT_MS, maxBuffer: 16 * 1024 * 1024,
-        env: { ...process.env, ...this.environment, GH_PROMPT_DISABLED: '1', LARKSUITE_CLI_NO_UPDATE_NOTIFIER: '1', LARKSUITE_CLI_NO_SKILLS_NOTIFIER: '1' } })
+        env: { ...process.env, ...this.environment, GH_PROMPT_DISABLED: '1', LARKSUITE_CLI_NO_UPDATE_NOTIFIER: '1', LARKSUITE_CLI_NO_SKILLS_NOTIFIER: '1', ...env } })
       return stdout
     } catch (error) { throw commandError(error, program) }
   }
