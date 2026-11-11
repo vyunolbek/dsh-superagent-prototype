@@ -43,7 +43,7 @@ export type GitlabDescription = z.infer<typeof DescriptionSchema>
 export const TodoSchema = z.looseObject({
   id: z.number(), target_type: z.string().nullish(), updated_at: z.string().nullish(),
   project: z.looseObject({ path_with_namespace: z.string().nullish() }).nullish(),
-  target: z.looseObject({ iid: z.number().nullish() }).nullish(),
+  target: z.looseObject({ iid: z.number().nullish(), updated_at: z.string().nullish() }).nullish(),
 })
 export type GitlabTodo = z.infer<typeof TodoSchema>
 export type GitlabRef = { kind: 'issue' | 'mr'; iid: number; url?: string }

@@ -213,8 +213,9 @@ async function pollTodos(ctx: SourceContext, round: Round): Promise<void> {
       continue
     }
     try {
-      // Reading from the todo's own update leaves notes from before it alone.
-      await readTarget(ctx, round, ref, todo.updated_at ?? undefined)
+      // Reading from the target's own update leaves notes from before it alone; the todo's own timestamps run a few
+      // seconds behind the event (the todo is created by a background job) and would cut the description or note off.
+      await readTarget(ctx, round, ref, todo.target?.updated_at ?? todo.updated_at ?? undefined)
       await glabRun(commands, ['api', `todos/${todo.id}/mark_as_done`, '--method', 'POST'])
     } catch (error) {
       if (stopped(ctx, round)) return
