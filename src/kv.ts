@@ -49,6 +49,11 @@ export const KV = {
     branchCi: record<{ branch?: string; failures?: string[]; revision: number }>('github-branch-ci'),
     ci: family<{ fingerprint: string; revision: number }, [number: number]>('github-ci:') },
   /**
+   * GitLab Source: per-stream cursor with its start time, and per-Issue/MR note cursor shared by todo and polled reads.
+   */
+  gitlab: { stream: family<{ since: string; started: string }, [stream: string]>('gitlab-stream:'),
+    cursor: family<string, [thread: string]>('gitlab-cursor:') },
+  /**
    * Feishu Source: known chats (`true` for direct messages); per-chat history cursor and active topics mapped from topic ID
    * to last-seen timestamp; and per-polled-thread seen message IDs and initialization flag.
    */

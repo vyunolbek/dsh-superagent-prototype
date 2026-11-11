@@ -21,10 +21,11 @@ Both presets run with `danger-full-access` as the operator's OS user and read me
 ## Prerequisites
 
 - Node.js 22.19+ or 24+, pnpm, git 2.32+, Python 3.8+ and tmux
-- GitHub CLI (`gh`) 2.48 or later. Source CLI fields must point to `gh` or `lark-cli` wrappers; the host relies on their subcommands and output formats.
-- A repository on github.com; GitHub Enterprise Server is not supported. To create a checkout per Ticket, keep a local clone from which the prepare command can add worktrees. Install `git-lfs` if that repository uses Git LFS.
+- GitHub CLI (`gh`) 2.48 or later. Source CLI fields must point to `gh`, `lark-cli` or `glab` wrappers; the host relies on their subcommands and output formats.
+- A repository on github.com, or a project on a self-hosted or gitlab.com GitLab (see the GitLab account below). To create a checkout per Ticket, keep a local clone from which the prepare command can add worktrees. Install `git-lfs` if that repository uses Git LFS.
 - A model provider configured for DeepSeek Harness. dsh-superagent uses the profile's default model unless the Eval or Execution settings name another.
 - For Feishu: `lark-cli` (tested with 1.0.90) and a Feishu or Lark app with a bot
+- For GitLab: `glab` (the GitLab CLI)
 
 ## Accounts
 
@@ -67,6 +68,29 @@ Both presets run with `danger-full-access` as the operator's OS user and read me
    The host refuses a CLI that can act as a user. It reads the app id, Feishu/Lark brand and bot `open_id` from the bot configuration.
 
    Both configurations share the keychain entry for the app secret. To remove only the bot configuration, delete its directory; do not run `lark-cli config remove`, which would affect the shared secret.
+
+### Agent GitLab account (optional)
+
+1. Enable the GitLab Source by uncommenting `dsh-superagent-gitlab` in the bundle's `cordis.patch.yml` and reloading dsh-superagent.
+2. Create a GitLab user account for the agent and give it at least the Developer role on the project. Give it a `glab` wrapper that uses only its own credentials:
+
+   ```sh
+   mkdir -p ~/.local/bin
+   cat > ~/.local/bin/glab-agent <<'EOF'
+   #!/bin/sh
+   export GLAB_CONFIG_DIR="$HOME/.config/glab-agent"
+   exec glab "$@"
+   EOF
+   chmod +x ~/.local/bin/glab-agent
+   glab-agent auth login --hostname <your GitLab host>
+   glab-agent api user
+   ```
+
+   The last command prints the agent's username as JSON.
+
+3. On the GitLab Source's card in the panel, set the GitLab base URL, the project as `group/project`, and the agent's `glab` wrapper. Saving checks that the account can read and push to the project, then restarts dsh-superagent.
+
+The agent listens to the project's todos to it (mentions and assignments), the discussion on subscribed Issues and merge requests, and optionally newly opened Issues and merge requests. Workers call `glab` through a shim that names the resolved GitLab host, and git resolves the GitLab credential from the agent's own configuration. CI status, auto-merge and merge queues are GitHub-only in this prototype.
 
 ## Install
 

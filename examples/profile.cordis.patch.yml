@@ -10,3 +10,6 @@
 # Feishu is optional: uncomment to enable its Source, then set the bot's lark-cli on the Feishu Source.
 # - id: dsh-superagent-feishu
 #   disabled: false
+# GitLab is optional: uncomment to enable its Source, then set the agent's glab CLI on the GitLab Source.
+# - id: dsh-superagent-gitlab
+#   disabled: false

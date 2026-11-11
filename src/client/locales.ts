@@ -32,7 +32,9 @@ const TEXT = {
   'source.feishu': ['飞书', 'Feishu'],
   'source.github': ['GitHub', 'GitHub'],
   'source.github-issue': ['GitHub Issue', 'GitHub Issue'],
+  'source.gitlab': ['GitLab', 'GitLab'],
   'health.github': ['GitHub 来源', 'GitHub Source'],
+  'health.gitlab': ['GitLab 来源', 'GitLab Source'],
   'health.feishu': ['飞书来源', 'Feishu Source'],
   'health.history': ['飞书补收', 'Feishu recovery'],
   'health.runtime': ['dsh-superagent', 'dsh-superagent'],
@@ -141,6 +143,7 @@ const TEXT = {
   actionAddAllowed: ['去添加', 'Add senders'],
   'problemSetupFix.github': ['在设置 › 来源的 GitHub 卡片修正后保存，会重新检查；在 dsh-superagent 之外修复的（例如登录 CLI），点“重新检查”。', 'Fix it on the GitHub card of the Source settings and save to check again; after a fix outside dsh-superagent, such as signing a CLI in, choose Check again.'],
   'problemSetupFix.feishu': ['在设置 › 来源的飞书卡片修正后保存，会重新检查；在 dsh-superagent 之外修复的（例如配置机器人），点“重新检查”。', 'Fix it on the Feishu card of the Source settings and save to check again; after a fix outside dsh-superagent, such as configuring the bot, choose Check again.'],
+  'problemSetupFix.gitlab': ['在设置 › 来源的 GitLab 卡片修正后保存，会重新检查；在 dsh-superagent 之外修复的（例如登录 CLI），点“重新检查”。', 'Fix it on the GitLab card of the Source settings and save to check again; after a fix outside dsh-superagent, such as signing a CLI in, choose Check again.'],
   'problemSetupFix.deployment': ['在部署设置里修正后保存，会重新检查；在 dsh-superagent 之外修复的（例如升级 git），点“重新检查”。', 'Fix it in the Deployment settings and save to check again; after a fix outside dsh-superagent, such as upgrading git, choose Check again.'],
   problemSetupFeishu: ['飞书机器人检查未通过，飞书来源暂停', 'Feishu bot check failed; the Feishu Source is paused'],
   // Source
@@ -726,6 +729,16 @@ const TEXT = {
   'userError.nothingToSync': ['{source} 来源上的策略没有指定从哪里同步，或者这个来源已关闭或在等待部署检查。', USER_ERRORS.nothingToSync[1]],
   // Setup problems and health codes; English reuses the host's own text read by the log and main Session
   'setup.repositoryUnset': ['GitHub 来源没有设置监听的仓库。', SETUP_PROBLEMS.repositoryUnset[1]],
+  'setup.gitlabBaseUrlUnset': ['GitLab 来源没有设置 GitLab 地址。', SETUP_PROBLEMS.gitlabBaseUrlUnset[1]],
+  'setup.gitlabRepositoryUnset': ['GitLab 来源没有设置监听的项目。', SETUP_PROBLEMS.gitlabRepositoryUnset[1]],
+  'setup.gitlabCliUnset': ['没有设置智能体的 GitLab CLI。', SETUP_PROBLEMS.gitlabCliUnset[1]],
+  'setup.gitlabCliMissing': ['找不到智能体的 GitLab CLI。', SETUP_PROBLEMS.gitlabCliMissing[1]],
+  'setup.gitlabCliSignedOut': ['智能体的 GitLab CLI 读不到它的账号。', SETUP_PROBLEMS.gitlabCliSignedOut[1]],
+  'setup.gitlabCliNoAccount': ['智能体的 GitLab CLI 没有报告 GitLab 账号。', SETUP_PROBLEMS.gitlabCliNoAccount[1]],
+  'setup.gitlabCliFailed': ['智能体的 GitLab CLI 不可用。', SETUP_PROBLEMS.gitlabCliFailed[1]],
+  'setup.gitlabRepositoryUnreadable': ['@{account} 读不到 {repository}。', SETUP_PROBLEMS.gitlabRepositoryUnreadable[1]],
+  'setup.gitlabRepositoryUnreported': ['智能体的 GitLab CLI 没有返回 {repository}。', SETUP_PROBLEMS.gitlabRepositoryUnreported[1]],
+  'setup.gitlabRepositoryReadOnly': ['@{account} 没有 {repository} 的推送权限。', SETUP_PROBLEMS.gitlabRepositoryReadOnly[1]],
   'setup.foreignFile': ['{file} 不是 dsh-superagent 写入的文件；移走它，或换一个状态目录。', SETUP_PROBLEMS.foreignFile[1]],
   'setup.gitTooOld': ['git 没有读取 dsh-superagent 为 github.com 写的凭据配置；需要 git 2.32 或更新版本。', SETUP_PROBLEMS.gitTooOld[1]],
   'setup.environmentFailed': ['准备智能体的运行环境失败。', SETUP_PROBLEMS.environmentFailed[1]],
@@ -745,6 +758,7 @@ const TEXT = {
   'healthCode.sourceOff': ['已关闭', HEALTH_TEXT.sourceOff],
   'healthCode.feishuCliUnset': ['来源已打开，还没有设置机器人的 lark-cli', HEALTH_TEXT.feishuCliUnset],
   'healthCode.feishuBotMissing': ['等待飞书机器人', HEALTH_TEXT.feishuBotMissing],
+  'healthCode.gitlabCliUnset': ['来源已打开，还没有设置智能体的 GitLab CLI', HEALTH_TEXT.gitlabCliUnset],
   'healthCode.pollFailures': ['连续 {count} 次轮询失败，最近一次：{error}', HEALTH_TEXT.pollFailures],
 } as const satisfies Record<string, readonly [string, string]>
 export type DshSuperagentKey = keyof typeof TEXT
