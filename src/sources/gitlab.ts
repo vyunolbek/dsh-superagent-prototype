@@ -213,9 +213,10 @@ async function pollTodos(ctx: SourceContext, round: Round): Promise<void> {
       continue
     }
     try {
-      // Reading from the target's own update leaves notes from before it alone; the todo's own timestamps run a few
-      // seconds behind the event (the todo is created by a background job) and would cut the description or note off.
-      await readTarget(ctx, round, ref, todo.target?.updated_at ?? todo.updated_at ?? undefined)
+      // Reading from the conversation's start takes in the description and every note the cursor has not taken; the
+      // todo's own timestamps run behind the event and the target's updated_at is moved by the event itself, so either
+      // would cut the triggering description or note off.
+      await readTarget(ctx, round, ref, todo.target?.created_at ?? todo.updated_at ?? undefined)
       await glabRun(commands, ['api', `todos/${todo.id}/mark_as_done`, '--method', 'POST'])
     } catch (error) {
       if (stopped(ctx, round)) return
@@ -298,7 +299,7 @@ async function pollStreams(ctx: SourceContext, round: Round): Promise<void> {
         // The stream only feeds newly opened Issues and merge requests; their discussion arrives through todos and Threads.
         if (!item.created_at || Date.parse(item.created_at) < Date.parse(begin)) continue
         const ref: GitlabRef = { kind: stream.kind, iid: item.iid, url: item.web_url ?? undefined }
-        await readTarget(ctx, round, ref, item.updated_at ?? undefined)
+        await readTarget(ctx, round, ref, item.created_at ?? item.updated_at ?? undefined)
       }
       const newest = Math.max(...items.map(item => Date.parse(item.updated_at ?? '')).filter(Number.isFinite))
       const moved = Number.isFinite(newest) ? cursorAt(new Date(newest).toISOString()) : since
